@@ -989,13 +989,13 @@ dialog::backdrop {
   max-width: 100%;
 }
 
-#libraryHome {
+:is(#libraryHome, .cover-options button:not(.cover-swatch)) {
   flex-shrink: 0;
   border-radius: 6px;
   transition: color 150ms, background-color 150ms;
 }
 
-#libraryHome:hover {
+:is(#libraryHome, .cover-options button:not(.cover-swatch)):not(:disabled):hover {
   color: var(--accent);
   background-color: color-mix(in srgb, var(--accent) 16%, transparent);
 }
@@ -1265,25 +1265,16 @@ dialog::backdrop {
 }
 
 .cover-upload {
-  display: grid;
-  gap: 8px;
-}
-
-.cover-options .cover-upload button {
-  text-decoration: none;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  display: contents;
 }
 
 .cover-options button:not(.cover-swatch) {
+  justify-self: start;
+  max-width: 100%;
+  padding: 3px 0;
   text-align: left;
-  color: var(--accent);
-  text-decoration: underline;
-}
-
-.cover-options > button:not(.cover-swatch) {
-  padding-inline: 0;
+  color: var(--ink);
+  text-decoration: none;
 }
 
 #coverReset {
@@ -1388,7 +1379,6 @@ dialog::backdrop {
 }
 [data-theme='dark'] #dialogBody :is(input:not([type='radio']), textarea) { background: var(--cream); color: var(--ink); border-color: var(--line); }
 [data-theme='dark'] .folder-actions .danger { color: #ffa5ad; }
-[data-theme='dark'] .cover-options button:not(.cover-swatch) { color: var(--accent); }
 [data-theme='dark'] :is(.primary, .export) { background: var(--accent); color: #fff; }
 
 [data-theme='dark'] dialog::backdrop { background: #09070bb0; }
