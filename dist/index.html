@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fbf5f7" />
+    <meta
+      name="description"
+      content="vibenotes — приложение для конспектов, фотографий и рукописных заметок"
+    />
+    <script src="theme.js?v=20261111-pages-ready"></script>
+    <title>vibenotes — место для мыслей</title>
+    <link rel="preload" href="fonts/Onest-Variable.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="stylesheet" href="style.css?v=20261111-pages-ready" />
+  </head>
+  <body>
+    <svg width="0" height="0" aria-hidden="true" class="cover-shapes">
+      <defs>
+        <clipPath id="folderCoverShape" clipPathUnits="objectBoundingBox">
+          <path d="M.06 0H.265C.295 0 .31 .01 .335 .03L.365 .052Q.385 .066 .415 .066H.94Q1 .066 1 .145V.923Q1 1 .94 1H.06Q0 1 0 .923V.077Q0 0 .06 0Z" />
+        </clipPath>
+      </defs>
+    </svg>
+    <aside class="sidebar">
+      <a class="brand" href="./">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <rect x="6" y="3" width="14" height="18" rx="2" />
+            <path d="M10 3v18M4 7h4M4 12h4M4 17h4M13 8h4M13 12h4" />
+          </svg>
+        </span>
+        <span class="brand-name">vibenotes</span>
+      </a>
+      <div class="workspace-label">ЛИЧНОЕ ПРОСТРАНСТВО</div>
+      <button id="newBook" class="add-notebook">＋ Добавить тетрадь</button>
+      <div class="library-head"><h2>Мои тетради</h2></div>
+      <nav id="books" aria-label="Тетради, папки и документы"></nav>
+      <div class="sidebar-bottom">
+        <button id="settings" class="settings-button sidebar-action" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>
+          <span>Настройки</span>
+        </button>
+        <button id="backup" class="backup sidebar-action">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" /></svg>
+          <span>Скачать резервную копию</span>
+        </button>
+      </div>
+    </aside>
+    <div
+      id="selectionMenu"
+      class="selection-menu"
+      role="group"
+      aria-label="Действия с объектом"
+      hidden
+    >
+      <button id="copyObject" title="Копировать (Ctrl+C)">Копировать</button>
+      <button id="pasteObject" title="Вставить (Ctrl+V)">Вставить</button>
+      <button id="duplicateObject" title="Создать копию (Ctrl+D)">
+        Дублировать
+      </button>
+      <button id="editObject">Изменить текст</button>
+      <button id="rotateLeft">Повернуть на 90° влево</button>
+      <button id="rotateRight">Повернуть на 90° вправо</button>
+      <button id="flipHorizontal">Отразить слева направо</button>
+      <button id="flipVertical">Отразить сверху вниз</button>
+      <button id="bringForward">На передний план</button>
+      <button id="sendBackward">На задний план</button>
+      <button id="deleteObject" title="Удалить (Delete)">Удалить</button>
+    </div>
+    <div
+      id="shapeMenu"
+      class="selection-menu shape-menu"
+      role="group"
+      aria-label="Геометрические фигуры"
+      hidden
+    >
+      <button type="button" data-shape="circle">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="8" />
+        </svg>
+        <span>Круг</span>
+      </button>
+      <button type="button" data-shape="ellipse">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <ellipse cx="12" cy="12" rx="9" ry="6" />
+        </svg>
+        <span>Овал</span>
+      </button>
+      <button type="button" data-shape="square">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 4h16v16H4z" />
+        </svg>
+        <span>Квадрат</span>
+      </button>
+      <button type="button" data-shape="rectangle">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 6h18v12H3z" />
+        </svg>
+        <span>Прямоугольник</span>
+      </button>
+      <button type="button" data-shape="trapezoid">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 5h10l5 14H2z" />
+        </svg>
+        <span>Трапеция</span>
+      </button>
+      <button type="button" data-shape="right-trapezoid">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 5h12l6 14H3z" />
+        </svg>
+        <span>Прямоугольная трапеция</span>
+      </button>
+      <button type="button" data-shape="parallelogram">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 5h15l-5 14H2z" />
+        </svg>
+        <span>Параллелограмм</span>
+      </button>
+      <button type="button" data-shape="diamond">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m12 2 9 10-9 10-9-10z" />
+        </svg>
+        <span>Ромб</span>
+      </button>
+    </div>
+    <main>
+      <header class="topbar">
+        <button id="libraryHome" class="text-button" title="Открыть все тетради">Мои тетради</button>
+        <nav id="pathBreadcrumb" class="breadcrumb" aria-label="Путь к открытому документу">
+          <span id="bookCrumb"></span>
+          <span id="pathSeparator" class="slash" aria-hidden="true">/</span>
+          <span id="pageCrumb" aria-current="page"></span>
+          <span id="sheetCrumb"></span>
+        </nav>
+        <div class="top-actions">
+          <span id="saveStatus" role="status">Загрузка…</span>
+          <button id="help" class="text-button">
+            ?
+            <span>Как пользоваться</span>
+          </button>
+          <button id="export" class="export">Экспорт PNG ↗</button>
+        </div>
+      </header>
+      <aside id="storageNotice" class="storage-notice" role="alert" hidden>
+        <p id="storageMessage"></p>
+        <button id="retrySave" type="button">Повторить сохранение</button>
+      </aside>
+      <section id="libraryView" class="library-view" aria-label="Тетради и папки">
+        <div class="library-view-head">
+          <div><h1 id="libraryTitle">Мои тетради</h1><p id="libraryDescription"></p></div>
+          <div id="libraryControls" class="library-controls"></div>
+        </div>
+        <div id="libraryGrid" class="library-grid"></div>
+      </section>
+      <div id="editorView" hidden>
+      <div
+        class="toolbar"
+        role="toolbar"
+        aria-label="Инструменты и настройки страницы"
+      >
+        <div class="tools">
+          <button
+            data-tool="select"
+            title="Лассо: обвести объекты (V)"
+            aria-label="Выделение лассо"
+          >
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M7 17c-7-2-5-13 5-13 12 0 12 13 2 14-5 1-7-2-5-4 3-3 8 1 5 5l-3 3"
+              />
+            </svg>
+          </button>
+          <button id="sizeButton" popovertarget="sizePopover" type="button" title="Изменить толщину пера" aria-label="Толщина пера: 3 px" aria-expanded="false" aria-controls="sizePopover">
+            <span id="sizeLabel">3 px</span>
+          </button>
+          <button
+            data-tool="pen"
+            class="active"
+            title="Перо (P)"
+            aria-label="Перо"
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="m15 4 5 5M4 20l2-7L16 3l5 5-10 10zM6 13l5 5" />
+            </svg>
+            <span>Перо</span>
+          </button>
+          <button data-tool="marker" title="Маркер (M)" aria-label="Маркер">
+            <svg viewBox="0 0 24 24">
+              <path d="m14 3 7 7-9 9-7-7zM5 12l-2 5 4 4 5-2M2 22h11" />
+            </svg>
+          </button>
+          <button
+            data-tool="eraser"
+            title="Ластик: удаляет штрих целиком (E)"
+            aria-label="Ластик"
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="m14 3 7 7-11 11H6l-4-4zM8 11l7 7M10 21h12" />
+            </svg>
+          </button>
+          <button
+            id="shapeTool"
+            title="Фигуры"
+            aria-label="Выбрать фигуру"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-controls="shapeMenu"
+          >
+            <svg viewBox="0 0 24 24">
+              <circle cx="8" cy="8" r="5" />
+              <path d="M12 12h9v9h-9z" />
+            </svg>
+          </button>
+          <button data-tool="text" title="Текст (T)" aria-label="Текст">
+            <svg viewBox="0 0 24 24"><path d="M4 5h16M12 5v15M8 20h8" /></svg>
+          </button>
+          <button
+            data-tool="hand"
+            title="Перемещение холста (H или пробел)"
+            aria-label="Перемещение холста"
+          >
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M8 12V5a2 2 0 0 1 4 0v7-8a2 2 0 0 1 4 0v8-5a2 2 0 0 1 4 0v9c0 5-4 7-8 7-3 0-5-2-7-5l-3-5c-1-2 2-3 3-1l3 3"
+              />
+            </svg>
+          </button>
+        </div>
+        <div class="pen-settings">
+          <i></i>
+          <div class="colors" id="colors"></div>
+          <input
+            id="customColor"
+            type="color"
+            value="#8d3e61"
+            title="Свой цвет"
+            aria-label="Свой цвет"
+          />
+          <i></i>
+
+          <label class="pressure" title="Толщина линии зависит от нажатия пера">
+            <input type="checkbox" id="pressure" checked />
+            Нажим
+          </label>
+        </div>
+        <div class="toolbar-end">
+          <div class="paper-control">
+            <label for="paper">Бумага</label>
+            <select id="paper">
+              <option value="dots">В точку</option>
+              <option value="grid">В клетку</option>
+              <option value="lines">В линейку</option>
+              <option value="blank">Чистая</option>
+            </select>
+            <label for="paperColor">Цвет листа</label>
+            <select id="paperColor" aria-label="Цвет листа">
+              <option value="white">Белый</option>
+              <option value="yellow">Желтоватый</option>
+              <option value="black">Чёрный</option>
+            </select>
+            <button
+              id="clearPage"
+              class="text-button"
+              title="Удалить всё содержимое текущей страницы"
+            >
+              Очистить страницу…
+            </button>
+            <button
+              id="pageMenu"
+              class="icon"
+              title="Действия со страницей"
+              aria-label="Действия со страницей"
+            >
+              ⋯
+            </button>
+          </div>
+          <button
+            id="upload"
+            title="Добавить фото (можно вставить из буфера через Ctrl+V)"
+            class="photo-button"
+          >
+            ＋ Фото
+          </button>
+          <i></i>
+          <button
+            id="undo"
+            class="icon"
+            title="Отменить (Ctrl+Z)"
+            aria-label="Отменить"
+          >
+            ↶
+          </button>
+          <button
+            id="redo"
+            class="icon"
+            title="Повторить (Ctrl+Shift+Z)"
+            aria-label="Повторить"
+          >
+            ↷
+          </button>
+        </div>
+      </div>
+      <section id="viewport" aria-label="Страницы тетради">
+        <div id="pageStack">
+          <div id="paperWrap">
+            <canvas
+              id="canvas"
+              width="1100"
+              height="1550"
+              aria-label="Страница для письма и рисования"
+            ></canvas>
+            <canvas
+              id="inkCanvas"
+              width="1100"
+              height="1550"
+              aria-hidden="true"
+            ></canvas>
+            <div class="canvas-hint" id="canvasHint">
+              Твоя следующая идея начинается здесь
+            </div>
+          </div>
+        </div>
+        <button id="addPageBottom" class="add-page-bottom" type="button">
+          ＋ Добавить страницу
+        </button>
+      </section>
+      <footer>
+        <div>
+          <span class="status-dot"></span>
+          <span id="toolHint">Перо · пиши и рисуй на странице</span>
+        </div>
+        <div class="zoom">
+          <button id="zoomOut" aria-label="Уменьшить">−</button>
+          <button id="zoomValue" title="Вписать страницу по ширине">75%</button>
+          <button id="zoomIn" aria-label="Увеличить">＋</button>
+          <span class="footer-divider"></span>
+          <span>1100 × 1550</span>
+        </div>
+      </footer>
+      </div>
+    </main>
+    <input
+      type="file"
+      id="photoInput"
+      accept="image/png,image/jpeg,image/webp,image/gif"
+      hidden
+    />
+    <input
+      type="file"
+      id="restoreInput"
+      accept="application/json,.json"
+      hidden
+    />
+    <div id="sizePopover" class="size-popover" popover="auto">
+      <label for="size">Толщина пера <output id="sizeValue">3 px</output></label>
+      <input id="size" type="range" min="1" max="24" value="3" aria-label="Толщина линии" />
+    </div>
+    <dialog id="dialog">
+      <form method="dialog" id="dialogForm">
+        <div class="dialog-top">
+          <h2 id="dialogTitle"></h2>
+          <button value="cancel" class="icon" aria-label="Закрыть">×</button>
+        </div>
+        <div id="dialogBody"></div>
+        <div class="dialog-actions">
+          <button value="cancel" class="text-button">Отмена</button>
+          <button value="ok" class="primary" id="dialogOk">Готово</button>
+        </div>
+      </form>
+    </dialog>
+    <div id="toast" role="status"></div>
+    <script type="module" src="app.js?v=20261111-pages-ready"></script>
+  </body>
+</html>

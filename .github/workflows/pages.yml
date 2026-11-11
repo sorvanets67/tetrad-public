@@ -1,0 +1,47 @@
+name: Publish GitHub Pages (manual)
+
+# Deliberately no push or pull_request trigger: publication is a separate manual action.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Check document and editing logic
+        run: node --test tests/core.test.mjs
+      - name: Check packaging and local server
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Prepare static files (no publication)
+        run: python3 prepare_pages.py --output "$RUNNER_TEMP/github-pages"
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/github-pages
+
+  deploy:
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Publish the checked artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
