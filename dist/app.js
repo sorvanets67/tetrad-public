@@ -2496,12 +2496,33 @@ function applyTheme(theme) {
   window.vibenotesAppearance.updateThemeColor();
 }
 
+function syncSavedAppearance() {
+  if ($('dialog').open && $('dialogBody').querySelector('.settings-panel')) return;
+  const appearance = window.vibenotesAppearance;
+  const { dataset } = document.documentElement;
+  let theme, accent;
+  try {
+    theme = localStorage.getItem('vibenotes-theme') === 'dark' ? 'dark' : 'light';
+    accent = localStorage.getItem('vibenotes-accent') || appearance.defaultAccent;
+  } catch { return; }
+  if (theme === dataset.theme && accent === dataset.accent) return;
+  applyTheme(theme);
+  appearance.applyAccent(accent);
+  if (viewMode === 'editor') draw();
+}
+
+window.addEventListener('storage', (event) => {
+  if (event.key === 'vibenotes-theme' || event.key === 'vibenotes-accent') syncSavedAppearance();
+});
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) syncSavedAppearance();
+});
+
 $('settings').onclick = () => {
   if (gesture || $('dialog').open) return;
   const original = document.documentElement.dataset.theme || 'light';
   const appearance = window.vibenotesAppearance;
   const originalAccent = document.documentElement.dataset.accent || appearance.defaultAccent;
-  let chosen = original, chosenAccent = originalAccent;
   const body = document.createElement('div');
   body.className = 'settings-panel';
   body.innerHTML = '<fieldset class="theme-options"><legend>Оформление</legend>' +
@@ -2517,10 +2538,9 @@ $('settings').onclick = () => {
     '<button id="restore" type="button">Восстановить из файла</button></div>';
   body.querySelector(`input[value="${original}"]`).checked = true;
   const accentInput = body.querySelector('#interfaceAccent');
-  accentInput.value = chosenAccent;
-  accentInput.oninput = () => {
-    chosenAccent = accentInput.value;
-    appearance.applyAccent(chosenAccent);
+  accentInput.value = originalAccent;
+  accentInput.oninput = accentInput.onchange = () => {
+    appearance.applyAccent(accentInput.value);
     if (viewMode === 'editor') draw();
   };
   body.querySelector('#resetAccent').onclick = () => {
@@ -2529,18 +2549,24 @@ $('settings').onclick = () => {
   };
   body.onchange = event => {
     if (event.target.name !== 'theme') return;
-    chosen = event.target.value;
-    applyTheme(chosen);
+    applyTheme(event.target.value);
   };
   showDialog('Настройки', body, () => {
+    const chosen = body.querySelector('input[name="theme"]:checked').value;
+    const chosenAccent = accentInput.value;
+    applyTheme(chosen);
+    appearance.applyAccent(chosenAccent);
+    if (viewMode === 'editor') draw();
     try {
       localStorage.setItem('vibenotes-theme', chosen);
       localStorage.setItem('vibenotes-accent', chosenAccent);
+      toast('Оформление сохранено');
     } catch { toast('Оформление включено. Браузер не разрешил сохранить его для следующего запуска.'); }
   }, () => {
     applyTheme(original);
     appearance.applyAccent(originalAccent);
     if (viewMode === 'editor') draw();
+    syncSavedAppearance();
   });
   $('dialogOk').textContent = 'Сохранить';
   $('restore').disabled = !state || !storageWritable;
