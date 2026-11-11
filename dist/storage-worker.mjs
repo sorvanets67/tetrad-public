@@ -1,4 +1,4 @@
-import { applyDocumentPatch } from './persistence.mjs?v=20261111-pages-ready';
+import { applyDocumentPatch } from './persistence.mjs?v=20261111-cover-dialogs';
 
 let db,
   state,

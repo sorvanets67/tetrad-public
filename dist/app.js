@@ -17,21 +17,21 @@ import {
   averagePressure,
   recentWritingPressure,
   aspectResizeBounds
-} from './core.mjs?v=20261111-pages-ready';
+} from './core.mjs?v=20261111-cover-dialogs';
 import {
   recognizeShape,
   shapeNames,
   createShapePoints,
   resizeElement,
   transformStroke
-} from './shapes.mjs?v=20261111-pages-ready';
+} from './shapes.mjs?v=20261111-cover-dialogs';
 import {
   DocumentPatches,
   snapshotDocument
-} from './persistence.mjs?v=20261111-pages-ready';
-import { drawPenSamples } from './ink.mjs?v=20261111-pages-ready';
-import { PageStack } from './page-stack.mjs?v=20261111-pages-ready';
-import { migrateLibrary, folderPath, folderFrontBounds, extendCoverArtworkEdges } from './library.mjs?v=20261111-pages-ready';
+} from './persistence.mjs?v=20261111-cover-dialogs';
+import { drawPenSamples } from './ink.mjs?v=20261111-cover-dialogs';
+import { PageStack } from './page-stack.mjs?v=20261111-cover-dialogs';
+import { migrateLibrary, folderPath, folderFrontBounds, extendCoverArtworkEdges } from './library.mjs?v=20261111-cover-dialogs';
 
 const $ = (id) => document.getElementById(id),
   canvas = $('canvas'),
@@ -197,7 +197,7 @@ function startStorageWorker(stored) {
   try {
     if (stored) patches.prime(state);
     storageWorker = new Worker(
-      new URL('./storage-worker.mjs?v=20261111-pages-ready', import.meta.url),
+      new URL('./storage-worker.mjs?v=20261111-cover-dialogs', import.meta.url),
       { type: 'module' }
     );
     storageWorker.onmessage = ({ data }) => {
@@ -406,7 +406,7 @@ function editCover(item) {
     '<input id="coverFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div>' +
     '<button id="coverRemoveImage" type="button">Убрать картинку</button>' +
     '<button id="coverReset" type="button">Вернуть стандартную обложку</button>' +
-    '<p id="coverStatus" role="status">Картинка заполнит обложку по центру.</p></div>';
+    '<p id="coverStatus" role="status"></p></div>';
   const refresh = () => {
     const preview = createCoverCard(item, folder, draft);
     preview.tabIndex = -1;
@@ -423,7 +423,6 @@ function editCover(item) {
     save();
   });
   $('dialogOk').textContent = 'Сохранить';
-  if (folder) $('coverStatus').textContent = 'Цвет выступа настраивается отдельно через «Цвет выступа…». Из картинки берём только прямоугольную часть.';
   const setColor = (color) => {
     draft = { ...draft, color };
     refresh();
@@ -505,7 +504,7 @@ function editCoverAccent(item, folder = true) {
     '<div class="cover-options"><label>' + label + '<input id="tabColor" type="color"></label>' +
     '<div id="tabPalette" class="cover-palette" aria-label="' + title + '"></div>' +
     '<button id="tabReset" type="button">' + resetLabel + '</button>' +
-    '<p id="tabStatus" role="status">Цвет передней части и картинка сохранятся.</p></div>';
+    '<p id="tabStatus" role="status"></p></div>';
   const refresh = () => {
     const preview = createCoverCard(item, folder, draft);
     preview.tabIndex = -1;

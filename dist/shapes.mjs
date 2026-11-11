@@ -4,7 +4,7 @@ import {
   strokeBounds,
   DEFAULT_PRESSURE,
   averagePressure
-} from './core.mjs?v=20261111-pages-ready';
+} from './core.mjs?v=20261111-cover-dialogs';
 
 export const shapeNames = {
   circle: 'Круг',

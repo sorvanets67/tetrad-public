@@ -1,4 +1,4 @@
-import { penWidth } from './core.mjs?v=20261111-pages-ready';
+import { penWidth } from './core.mjs?v=20261111-cover-dialogs';
 
 // Only the new points are painted while the pen moves. No old page objects
 // are visited, and every pressure sample remains in the editable document.

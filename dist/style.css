@@ -1231,7 +1231,7 @@ dialog::backdrop {
 
 .cover-editor {
   display: grid;
-  grid-template-columns: minmax(120px, 190px) minmax(0, 1fr);
+  grid-template-columns: minmax(120px, 190px) minmax(210px, 1fr);
   gap: 22px;
   align-items: start;
 }
@@ -1245,6 +1245,7 @@ dialog::backdrop {
 
 .cover-options {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 
@@ -1281,11 +1282,24 @@ dialog::backdrop {
   text-decoration: underline;
 }
 
+.cover-options > button:not(.cover-swatch) {
+  padding-inline: 0;
+}
+
+#coverReset {
+  font-size: min(1em, 4.3vw);
+  white-space: nowrap;
+}
+
 .cover-options p {
   margin: 0;
   color: #75686d;
   font-size: 11px;
   line-height: 1.5;
+}
+
+.cover-options p:empty {
+  position: absolute;
 }
 
 .cover-palette {
