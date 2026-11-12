@@ -10,7 +10,7 @@ from urllib.parse import unquote, urlsplit
 
 DIST = Path(__file__).resolve().parent / 'dist'
 ASSETS = (
-    'index.html', 'style.css', 'theme.js', 'app.js', 'core.mjs', 'shapes.mjs',
+    'index.html', 'favicon.svg', 'style.css', 'theme.js', 'app.js', 'core.mjs', 'shapes.mjs',
     'ink.mjs', 'page-stack.mjs', 'library.mjs', 'persistence.mjs', 'storage-worker.mjs',
     'fonts/Onest-Variable.ttf', 'fonts/Onest-OFL.txt', '.nojekyll',
 )
