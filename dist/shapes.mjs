@@ -4,9 +4,11 @@ import {
   strokeBounds,
   DEFAULT_PRESSURE,
   averagePressure
-} from './core.mjs?v=20261111-cover-dialogs';
+} from './core.mjs?v=20261112-marker-shapes';
 
 export const shapeNames = {
+  line: 'Линия',
+  'dashed-line': 'Пунктирная линия',
   circle: 'Круг',
   ellipse: 'Овал',
   square: 'Квадрат',
@@ -24,6 +26,8 @@ export function createShapePoints(
   pressure = DEFAULT_PRESSURE
 ) {
   if (!Object.hasOwn(shapeNames, kind)) throw Error('Неизвестная фигура');
+  if (kind === 'line' || kind === 'dashed-line')
+    return [start, end].map(({ x, y }) => ({ x, y, p: pressure }));
   let w = Math.abs(end.x - start.x),
     h = Math.abs(end.y - start.y);
   if (kind === 'circle' || kind === 'square') w = h = Math.min(w, h);

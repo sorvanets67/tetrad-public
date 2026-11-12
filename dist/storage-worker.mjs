@@ -1,4 +1,4 @@
-import { applyDocumentPatch } from './persistence.mjs?v=20261111-cover-dialogs';
+import { applyDocumentPatch } from './persistence.mjs?v=20261112-marker-shapes';
 
 let db,
   state,

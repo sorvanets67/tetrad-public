@@ -1059,6 +1059,22 @@ test('continued drawing restores freehand; release, cancellation and marker cann
   assert.equal(run('current().elements[0].points.length'), 3);
 });
 
+test('holding a marker straightens a line and a closed contour while preserving marker strokes', () => {
+  for (const [points, kind] of [[roughLine, 'line'], [roughEllipse(90, 90), 'circle']]) {
+    const { node, run, advanceTimers } = editingWorkspace();
+    run('setTool("marker")');
+    const event = beginHeldStroke(node, points);
+    advanceTimers(450);
+    assert.equal(run('gesture.shape'), kind);
+    assert.equal(run('current().elements[0].tool'), 'marker');
+    node('canvas').listeners.pointerup({ ...event, type: 'pointerup' });
+    assert.equal(node('canvas').context.globalAlpha, 0.24);
+    run('validateState(JSON.parse(JSON.stringify(state))); undo(); redo()');
+    assert.equal(run('current().elements[0].tool'), 'marker');
+    if (kind === 'line') assert.equal(run('current().elements[0].points.length'), 2);
+  }
+});
+
 test('holding a scribble still deletes only on release and never converts it to a shape', () => {
   const { node, run, advanceTimers } = scribbleWorkspace();
   const event = beginHeldStroke(node, scribbleWave);
@@ -1230,8 +1246,9 @@ test('closure tail recognition is independent of pointer sample density', () => 
 });
 
 test('all eight menu shapes are closed strokes with valid backups, including reverse drawing', () => {
-  assert.equal(Object.keys(shapeNames).length, 8);
-  for (const kind of Object.keys(shapeNames)) {
+  const closedKinds = Object.keys(shapeNames).filter(kind => !['line', 'dashed-line'].includes(kind));
+  assert.equal(closedKinds.length, 8);
+  for (const kind of closedKinds) {
     for (const end of [
       { x: 340, y: 260 },
       { x: 60, y: 80 }
@@ -1318,7 +1335,7 @@ test('shape icon opens a menu and each chosen shape is created by dragging, sele
     assert.equal(run('undoStack.length'), 1);
     assert.equal(
       run('current().elements[0].points.length'),
-      ['circle', 'ellipse'].includes(kind) ? 97 : 5
+      ['line', 'dashed-line'].includes(kind) ? 2 : ['circle', 'ellipse'].includes(kind) ? 97 : 5
     );
     run('undo()');
     assert.equal(run('current().elements.length'), 0);
@@ -1326,6 +1343,25 @@ test('shape icon opens a menu and each chosen shape is created by dragging, sele
       'redo(); selection = [current().elements[0].id]; copySelection(); pasteObject(); validateState(JSON.parse(JSON.stringify(state)))'
     );
     assert.equal(run('current().elements.length'), 2);
+  }
+});
+
+test('menu lines can be drawn horizontally or vertically, and dashes survive copy and backup', () => {
+  for (const kind of ['line', 'dashed-line']) {
+    for (const end of [{ x: 50, y: 100 }, { x: 100, y: 240 }]) {
+      const { node, run } = editingWorkspace();
+      const dashes = [];
+      node('canvas').getContext().setLineDash = value => dashes.push(value);
+      run(`chooseShape('${kind}')`);
+      drawLine(node, [{ x: 100, y: 100 }, end]);
+      assert.deepEqual(JSON.parse(run('JSON.stringify(current().elements[0].points.map(({x,y})=>({x,y})))')),
+        [{ x: 100, y: 100 }, end]);
+      assert.equal(run('current().elements[0].dashed === true'), kind === 'dashed-line');
+      run('drawElement(ctx, current().elements[0]); copySelection(); pasteObject()');
+      assert.equal(dashes.some(pattern => pattern.length === 2), kind === 'dashed-line');
+      assert.equal(run('validateState(JSON.parse(JSON.stringify(state))).books[0].pages[0].elements[1].dashed === true'),
+        kind === 'dashed-line');
+    }
   }
 });
 
@@ -3225,13 +3261,20 @@ test('interface accent loads safely before paint without touching notes or writi
   const source=readFileSync(new URL('../dist/theme.js',import.meta.url),'utf8');
   for(const saved of ['#228855','#FFFFFF','#000000','invalid','red;display:none',null]) {
     const root={dataset:{},style:{setProperty(k,v){this[k]=v}}};
-    const context=vm.createContext({window:{},document:{documentElement:root,querySelector:()=>({})},
+    const icon={href:'favicon.svg'};
+    const context=vm.createContext({window:{},document:{documentElement:root,querySelector:key=>key.startsWith('link')?icon:{}},
       localStorage:{getItem:k=>k==='vibenotes-accent'?saved:'dark',setItem(){throw Error('unexpected write')}}});
     vm.runInContext(source,context);
     assert.equal(root.dataset.theme,'dark');
     assert.equal(root.dataset.accent,/^#[0-9a-f]{6}$/i.test(saved||'')?saved.toLowerCase():'#df82b1');
     assert.equal(root.style['--accent'],root.dataset.accent);
     assert.equal(root.style['--accent-ink'],saved==='#FFFFFF'?'#201b22':'#ffffff');
+    if (root.dataset.accent === '#df82b1') assert.equal(icon.href,'favicon.svg');
+    else assert.ok(decodeURIComponent(icon.href).includes(`fill="${root.dataset.accent}"`));
+    context.window.vibenotesAppearance.applyAccent('#000000');
+    assert.match(decodeURIComponent(icon.href), /fill="#000000"[\s\S]*stroke="#ffffff"/);
+    context.window.vibenotesAppearance.applyAccent('#df82b1');
+    assert.equal(icon.href,'favicon.svg');
   }
   const root={dataset:{},style:{setProperty(){}}};
   vm.runInNewContext(source,{window:{},document:{documentElement:root,querySelector:()=>({})},

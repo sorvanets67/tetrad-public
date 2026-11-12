@@ -380,6 +380,7 @@ export function validateState(s) {
           if (
             e.size <= 0 ||
             !['pen', 'marker'].includes(e.tool) ||
+            (e.dashed !== undefined && typeof e.dashed !== 'boolean') ||
             !Array.isArray(e.points) ||
             !e.points.length ||
             e.points.length > 1000000

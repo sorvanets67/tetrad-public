@@ -1,4 +1,4 @@
-import { uid } from './core.mjs?v=20261111-cover-dialogs';
+import { uid } from './core.mjs?v=20261112-marker-shapes';
 
 // Add organization metadata to version:1 without rewriting pages or photos.
 // Old flat notebooks each become one folder containing their original document.

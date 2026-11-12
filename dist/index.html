@@ -75,6 +75,18 @@
       aria-label="Геометрические фигуры"
       hidden
     >
+      <button type="button" data-shape="line">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 12h16" />
+        </svg>
+        <span>Линия</span>
+      </button>
+      <button type="button" data-shape="dashed-line">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 12h3m4 0h4m4 0h3" />
+        </svg>
+        <span>Пунктирная линия</span>
+      </button>
       <button type="button" data-shape="circle">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="8" />
@@ -370,6 +382,6 @@
       </form>
     </dialog>
     <div id="toast" role="status"></div>
-    <script type="module" src="app.js?v=20261111-theme-save"></script>
+    <script type="module" src="app.js?v=20261112-marker-shapes"></script>
   </body>
 </html>

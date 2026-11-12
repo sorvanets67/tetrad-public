@@ -17,21 +17,21 @@ import {
   averagePressure,
   recentWritingPressure,
   aspectResizeBounds
-} from './core.mjs?v=20261111-cover-dialogs';
+} from './core.mjs?v=20261112-marker-shapes';
 import {
   recognizeShape,
   shapeNames,
   createShapePoints,
   resizeElement,
   transformStroke
-} from './shapes.mjs?v=20261111-cover-dialogs';
+} from './shapes.mjs?v=20261112-marker-shapes';
 import {
   DocumentPatches,
   snapshotDocument
-} from './persistence.mjs?v=20261111-cover-dialogs';
-import { drawPenSamples } from './ink.mjs?v=20261111-cover-dialogs';
-import { PageStack } from './page-stack.mjs?v=20261111-cover-dialogs';
-import { migrateLibrary, folderPath, folderFrontBounds, extendCoverArtworkEdges } from './library.mjs?v=20261111-cover-dialogs';
+} from './persistence.mjs?v=20261112-marker-shapes';
+import { drawPenSamples } from './ink.mjs?v=20261112-marker-shapes';
+import { PageStack } from './page-stack.mjs?v=20261112-marker-shapes';
+import { migrateLibrary, folderPath, folderFrontBounds, extendCoverArtworkEdges } from './library.mjs?v=20261112-marker-shapes';
 
 const $ = (id) => document.getElementById(id),
   canvas = $('canvas'),
@@ -81,7 +81,7 @@ const expandedFolders = new Set();
 const hint = {
   shape: 'Фигуры · проведи по странице, чтобы задать размер',
   pen: 'Перо · пиши и рисуй на странице',
-  marker: 'Маркер · выделяй важное',
+  marker: 'Маркер · задержи в конце штриха, чтобы выровнять фигуру',
   eraser: 'Ластик · удаляет штрих целиком',
   text: 'Текст · нажми на лист, чтобы добавить подпись',
   select: 'Лассо · обведи объекты, затем перетаскивай выделенную область',
@@ -197,7 +197,7 @@ function startStorageWorker(stored) {
   try {
     if (stored) patches.prime(state);
     storageWorker = new Worker(
-      new URL('./storage-worker.mjs?v=20261111-cover-dialogs', import.meta.url),
+      new URL('./storage-worker.mjs?v=20261112-marker-shapes', import.meta.url),
       { type: 'module' }
     );
     storageWorker.onmessage = ({ data }) => {
@@ -1042,17 +1042,10 @@ function drawElement(c, e) {
     c.lineJoin = 'round';
     c.globalAlpha = e.tool === 'marker' ? 0.24 : 1;
     const path = new Path2D();
-    if (e.tool === 'marker') {
-      path.moveTo(e.points[0].x, e.points[0].y);
-      for (const q of e.points) path.lineTo(q.x, q.y);
-      c.lineWidth = e.size * 5;
-      if (e.points.length === 1) {
-        c.beginPath();
-        c.arc(e.points[0].x, e.points[0].y, c.lineWidth / 2, 0, Math.PI * 2);
-        c.fill();
-      } else c.stroke(path);
-    } else if (e.points.every((p) => p.p === e.points[0].p)) {
-      c.lineWidth = penWidth(e.size, e.points[0].p);
+    if (e.tool === 'marker' || e.dashed || e.points.every((p) => p.p === e.points[0].p)) {
+      c.lineWidth = e.tool === 'marker' ? e.size * 5 : penWidth(e.size, e.points[0].p);
+      if (e.dashed)
+        c.setLineDash([Math.max(8, c.lineWidth * 3), Math.max(5, c.lineWidth * 2)]);
       if (e.points.length === 1) {
         c.beginPath();
         c.arc(e.points[0].x, e.points[0].y, c.lineWidth / 2, 0, Math.PI * 2);
@@ -1431,15 +1424,16 @@ function pagePoint(p) {
 
 function updateCreatedShape(g, p) {
   const end = pagePoint(p);
-  if (
-    Math.abs(end.x - g.start.x) < 4 / zoom ||
-    Math.abs(end.y - g.start.y) < 4 / zoom
-  ) {
+  const dx = Math.abs(end.x - g.start.x), dy = Math.abs(end.y - g.start.y);
+  const isLine = g.kind === 'line' || g.kind === 'dashed-line';
+  if ((isLine ? Math.hypot(dx, dy) : Math.min(dx, dy)) < 4 / zoom) {
     g.element = null;
     return;
   }
-  if (!g.element)
+  if (!g.element) {
     g.element = { id: uid(), type: 'stroke', tool: 'pen', color, size };
+    if (g.kind === 'dashed-line') g.element.dashed = true;
+  }
   g.element.points = createShapePoints(g.kind, g.start, end, g.pressure);
 }
 
@@ -1659,7 +1653,6 @@ function erase(p) {
 }
 
 function scheduleShape(g, p) {
-  if (g.element.tool !== 'pen') return;
   if (
     g.holdTimer &&
     Math.hypot(p.x - g.holdAnchor.x, p.y - g.holdAnchor.y) <= 8 / zoom
@@ -2596,7 +2589,7 @@ $('settings').onclick = () => {
 $('help').onclick = () => {
   const body = document.createElement('div');
   body.innerHTML =
-    '<p>Загрузи фото, вставь изображение из буфера через Ctrl+V или начни писать на листе.</p><ul><li><b>P</b> — перо, <b>M</b> — маркер, <b>E</b> — ластик целого штриха.</li><li><b>V</b> — лассо: обведи штрихи, фото и текст целиком, затем перетаскивай выделенную область. Тяни за углы и стороны рамки, чтобы растягивать фигуры, штрихи и фото. Shift при изменении размера фото сохраняет пропорции. Круглая ручка вращает фигуры и штрихи, Shift задаёт шаг 15°. В меню по правой кнопке есть повороты на 90° и зеркальные отражения.</li><li><b>T</b> — текст. Двойной щелчок по тексту в режиме выбора — редактировать.</li><li><b>Ctrl+C / Ctrl+V</b> — копировать и вставлять объект внутри приложения, <b>Ctrl+D</b> — дублировать.</li><li><b>Delete</b> — удалить выбранный объект, <b>Esc</b> — снять выделение. Действия доступны по правой кнопке на странице.</li><li><b>Фигуры</b> — нажми значок круга с квадратом, выбери фигуру и нарисуй её перетаскиванием. После создания двигай её за выделенную область и растягивай за углы или стороны рамки.</li><li><b>Ровные фигуры</b> — нарисуй пером линию, круг, овал, треугольник или прямоугольник одним штрихом и задержи перо в конце примерно на 0,45 секунды. Подними перо, чтобы сохранить, или продолжи движение для свободного рисунка.</li><li><b>Очистить страницу…</b> — удалить всё её содержимое с подтверждением. Очистку можно отменить до смены страницы.</li><li><b>Пробел + перетаскивание</b> — двигать холст.</li><li><b>Ctrl + колесо</b> — масштаб, <b>Ctrl + Z</b> — отмена.</li><li>Двойной щелчок по тетради — переименовать.</li></ul><p>Нажим работает, если браузер получает давление от планшета. Отключи «Нажим» для постоянной толщины.</p><p>Записи сохраняются только в этом браузере. Регулярно скачивай резервную копию: очистка данных сайта удалит локальные конспекты.</p>';
+    '<p>Загрузи фото, вставь изображение из буфера через Ctrl+V или начни писать на листе.</p><ul><li><b>P</b> — перо, <b>M</b> — маркер, <b>E</b> — ластик целого штриха.</li><li><b>V</b> — лассо: обведи штрихи, фото и текст целиком, затем перетаскивай выделенную область. Тяни за углы и стороны рамки, чтобы растягивать фигуры, штрихи и фото. Shift при изменении размера фото сохраняет пропорции. Круглая ручка вращает фигуры и штрихи, Shift задаёт шаг 15°. В меню по правой кнопке есть повороты на 90° и зеркальные отражения.</li><li><b>T</b> — текст. Двойной щелчок по тексту в режиме выбора — редактировать.</li><li><b>Ctrl+C / Ctrl+V</b> — копировать и вставлять объект внутри приложения, <b>Ctrl+D</b> — дублировать.</li><li><b>Delete</b> — удалить выбранный объект, <b>Esc</b> — снять выделение. Действия доступны по правой кнопке на странице.</li><li><b>Фигуры</b> — нажми значок круга с квадратом, выбери фигуру и нарисуй её перетаскиванием. После создания двигай её за выделенную область и растягивай за углы или стороны рамки.</li><li><b>Ровные фигуры</b> — нарисуй пером или маркером линию, круг, овал, треугольник или прямоугольник одним штрихом и задержи перо в конце примерно на 0,45 секунды. Подними перо, чтобы сохранить, или продолжи движение для свободного рисунка.</li><li><b>Очистить страницу…</b> — удалить всё её содержимое с подтверждением. Очистку можно отменить до смены страницы.</li><li><b>Пробел + перетаскивание</b> — двигать холст.</li><li><b>Ctrl + колесо</b> — масштаб, <b>Ctrl + Z</b> — отмена.</li><li>Двойной щелчок по тетради — переименовать.</li></ul><p>Нажим работает, если браузер получает давление от планшета. Отключи «Нажим» для постоянной толщины.</p><p>Записи сохраняются только в этом браузере. Регулярно скачивай резервную копию: очистка данных сайта удалит локальные конспекты.</p>';
   showDialog('Твоё место для мыслей', body, () => {});
 };
 window.addEventListener('keydown', (e) => {
