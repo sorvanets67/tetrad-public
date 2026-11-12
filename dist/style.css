@@ -989,13 +989,13 @@ dialog::backdrop {
   max-width: 100%;
 }
 
-:is(#libraryHome, .cover-options button:not(.cover-swatch)) {
+:is(#libraryHome, #help, .cover-options button:not(.cover-swatch)) {
   flex-shrink: 0;
   border-radius: 6px;
   transition: color 150ms, background-color 150ms;
 }
 
-:is(#libraryHome, .cover-options button:not(.cover-swatch)):not(:disabled):hover {
+:is(#libraryHome, #help, .cover-options button:not(.cover-swatch)):not(:disabled):hover {
   color: var(--accent);
   background-color: color-mix(in srgb, var(--accent) 16%, transparent);
 }
